@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Inject structural configuration parameters right out of the gate
     document.getElementById("nav-server-name").innerText = CONFIG.serverName;
     document.getElementById("card-ip-text").innerText = CONFIG.serverIp;
-    document.getElementById("external-map-btn").href = CONFIG.blueMapUrl;
     
     // Fire up structural loops
     initializeLucide();
@@ -19,9 +18,6 @@ function initializeLucide() {
 
 // System Dashboard Status Matrix Handler
 async function queryServerMatrix() {
-    const pulseElement = document.getElementById("global-pulse");
-    const pulseText = document.getElementById("global-status-text");
-    
     try {
         // Upgraded pipeline pointing to the new mcstatus.io engine
         const response = await fetch(`https://api.mcstatus.io/v2/status/java/${CONFIG.serverIp}`);
@@ -97,9 +93,6 @@ function updateDashboardView(data) {
         } else {
             playerListContainer.classList.add("hidden");
         }
-
-        // Check map connectivity state
-        verifyBlueMapConnectivity();
     } else {
         flagDashboardOffline();
     }
@@ -131,54 +124,7 @@ function flagDashboardOffline() {
     // Wipe out data rosters on overall drop cycles
     document.getElementById("player-list-container").classList.add("hidden");
 
-    toggleMapDisplay(false);
     initializeLucide();
-}
-
-// Client-Side Intelligent Network Test for Tunnel Targets (zrok2 Verification)
-async function verifyBlueMapConnectivity() {
-    const iframe = document.getElementById("bluemap-frame");
-    
-    try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 4500); // 4.5s aggressive network drop window
-        
-        // Используем режим mode: "no-cors" — это заставит браузер проигнорировать защиту CORS.
-        // Нам не нужно читать содержимое страницы, нам важно лишь узнать, отвечает ли туннель zrok2.
-        await fetch(CONFIG.blueMapUrl, { 
-            method: "GET",
-            mode: "no-cors", 
-            signal: controller.signal 
-        });
-        clearTimeout(timeout);
-        
-        // Если туннель активен и ответил (даже "непрозрачным" ответом), безопасно загружаем iframe
-        if (iframe.src !== CONFIG.blueMapUrl) {
-            iframe.src = CONFIG.blueMapUrl;
-        }
-        toggleMapDisplay(true);
-    } catch (e) {
-        // Срабатывает автоматически, если друг выключил батник zrok2 или ПК
-        console.error("zrok2 Tunnel connection error (the server might be offline):", e.message);
-        toggleMapDisplay(false);
-    }
-}
-
-// Smooth structural display transitions
-function toggleMapDisplay(isOnline) {
-    const iframe = document.getElementById("bluemap-frame");
-    const fallback = document.getElementById("map-fallback");
-
-    if (isOnline) {
-        iframe.classList.remove("opacity-0");
-        iframe.classList.add("opacity-100");
-        fallback.classList.add("opacity-0", "pointer-events-none");
-    } else {
-        iframe.classList.add("opacity-0");
-        iframe.classList.remove("opacity-100");
-        fallback.classList.remove("opacity-0", "pointer-events-none");
-        iframe.src = ""; 
-    }
 }
 
 // Copy to Clipboard Action Controller
